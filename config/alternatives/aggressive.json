@@ -1,0 +1,11 @@
+{
+  "_comment": "Variante plus agressive, NON retenue par la sélection IS. Utiliser avec --config config/alternatives/aggressive.json.",
+  "strategy": {
+    "target_vol": 0.3,
+    "rebalance_days": 7
+  },
+  "risk": {
+    "stop_atr": 6.0,
+    "trail_atr": 6.0
+  }
+}

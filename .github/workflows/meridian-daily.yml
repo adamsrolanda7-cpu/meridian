@@ -1,0 +1,107 @@
+name: Meridian daily paper
+
+# Une séance par jour, après la clôture des bougies journalières Binance
+# (00:00 UTC). GitHub peut décaler les crons de quelques minutes.
+on:
+  schedule:
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meridian-daily
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    # Évite d'écrire l'état depuis une branche de travail : la séance doit
+    # tourner sur la branche par défaut.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: UTC
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore paper state
+        run: |
+          if git ls-remote --exit-code --heads origin meridian-state >/dev/null 2>&1; then
+            git fetch origin meridian-state
+            if git cat-file -e origin/meridian-state:runs 2>/dev/null; then
+              git archive origin/meridian-state runs | tar -x
+            fi
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Cache market data
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: meridian-data-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            meridian-data-
+
+      - name: Download market data
+        run: python -m meridian download --force
+
+      - name: Initialize paper on first run
+        run: |
+          if [ ! -f runs/paper/state.json ]; then
+            python -m meridian paper --init
+            # Génère les intentions pour la prochaine ouverture.
+            python -m meridian paper
+          fi
+
+      - name: Run daily session
+        run: bash scripts/daily.sh --no-download
+
+      - name: Upload state and snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meridian-${{ github.run_id }}
+          path: |
+            runs/paper/state.json
+            runs/paper/snapshot.json
+            runs/paper/journal.jsonl
+            runs/paper/memo.md
+            runs/monitor.json
+            runs/monitor.md
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Persist paper state
+        if: always()
+        run: |
+          set -e
+          git config user.name "meridian-bot"
+          git config user.email "meridian-bot@users.noreply.github.com"
+          git checkout -B meridian-state
+          git add -f runs/paper
+          if [ -f runs/monitor.json ]; then git add -f runs/monitor.json; fi
+          if [ -f runs/monitor.md ]; then git add -f runs/monitor.md; fi
+          if git diff --cached --quiet; then
+            echo "aucun changement d'état"
+            exit 0
+          fi
+          git commit -m "state: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push --force origin meridian-state

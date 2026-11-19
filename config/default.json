@@ -1,0 +1,118 @@
+{
+  "name": "Meridian Core",
+  "version": 1,
+  "universe": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "LTCUSDT",
+    "XRPUSDT",
+    "BNBUSDT",
+    "LINKUSDT",
+    "AVAXUSDT"
+  ],
+  "interval": "1d",
+  "start": "2019-01-01",
+  "initial_equity": 100000.0,
+  "quote": "USDT",
+  "strategy": {
+    "target_vol": 0.22,
+    "max_gross": 0.95,
+    "min_cash": 0.05,
+    "max_asset_weight": 0.35,
+    "rebalance_threshold": 0.025,
+    "min_notional": 100.0,
+    "allow_short": false,
+    "use_confidence": true,
+    "cov_lambda": 0.97,
+    "cov_shrink": 0.3,
+    "cov_window": 90,
+    "trend": {
+      "ema_fast": 50,
+      "ema_slow": 200,
+      "mom_win": 90,
+      "breakout_win": 55,
+      "adx_min": 15,
+      "score_floor": 0.1
+    },
+    "meanrev": {
+      "enabled": false,
+      "bb_win": 20,
+      "z_entry": 1.8,
+      "rsi_entry": 38,
+      "exit_z": 0.25,
+      "max_hold": 10,
+      "market_breadth_min": 0.0,
+      "asset_above_slow": false
+    },
+    "xsmom": {
+      "enabled": true,
+      "mom_win": 90,
+      "top_n": 2,
+      "min_dispersion": 0.15
+    },
+    "regime": {
+      "adx_trend": 15.0,
+      "vol_crisis_pct": 0.9,
+      "dd_crisis": 0.15,
+      "mom_crisis": 0.1,
+      "breadth": 0.5,
+      "confirm_bars": 2,
+      "bear_breadth": 0.0
+    },
+    "rebalance_days": 14,
+    "entry_score": 0.25,
+    "exit_score": 0.12,
+    "min_hold_days": 5,
+    "asset_caps": {},
+    "core_btc": 0.0
+  },
+  "risk": {
+    "atr_win": 14,
+    "stop_atr": 6.0,
+    "mr_stop_atr": 2.0,
+    "trail_atr": 6.0,
+    "hard_stop_pct": 0.0,
+    "cooldown_bars": 5,
+    "daily_loss_limit": 0.03,
+    "dd_derisk": 0.08,
+    "dd_halt": 0.12,
+    "halt_bars": 25,
+    "max_adv_pct": 0.05,
+    "position_adv_pct": 0.01,
+    "vol_floor": 0.2,
+    "probation_bars": 40,
+    "probation_scale": 0.25,
+    "halt_step": 0.05
+  },
+  "costs": {
+    "fee_bps": 8.0,
+    "slippage_bps": 5.0,
+    "impact_coef_bps": 20.0
+  },
+  "monitor": {
+    "rolling_window": 90,
+    "drawdown_watch": 0.12,
+    "drawdown_kill": 0.20,
+    "rolling_sharpe_watch": 0.0,
+    "rolling_sharpe_kill": -0.5,
+    "max_stale_days": 3,
+    "max_replay_divergence": 0.01,
+    "max_turnover_x": 9.0,
+    "min_history_days": 60
+  },
+  "research": {
+    "freeze_mandate": true,
+    "split_ratio": 0.7
+  },
+  "data": {
+    "source": "binance",
+    "cache_dir": "data",
+    "base_url": "https://data-api.binance.vision",
+    "fallback_url": "https://api.binance.com"
+  },
+  "execution": {
+    "mode": "paper",
+    "broker": null
+  }
+}

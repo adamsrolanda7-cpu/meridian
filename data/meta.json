@@ -1,0 +1,74 @@
+{
+  "BTCUSDT": {
+    "symbol": "BTCUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2876,
+    "first": "2019-01-01 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T09:26:30+00:00"
+  },
+  "ETHUSDT": {
+    "symbol": "ETHUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2876,
+    "first": "2019-01-01 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T09:26:37+00:00"
+  },
+  "SOLUSDT": {
+    "symbol": "SOLUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2288,
+    "first": "2020-08-11 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T09:26:44+00:00"
+  },
+  "LTCUSDT": {
+    "symbol": "LTCUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2876,
+    "first": "2019-01-01 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T09:26:52+00:00"
+  },
+  "XRPUSDT": {
+    "symbol": "XRPUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2876,
+    "first": "2019-01-01 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T10:48:39+00:00"
+  },
+  "BNBUSDT": {
+    "symbol": "BNBUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2876,
+    "first": "2019-01-01 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T10:48:53+00:00"
+  },
+  "LINKUSDT": {
+    "symbol": "LINKUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2861,
+    "first": "2019-01-16 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T10:49:05+00:00"
+  },
+  "AVAXUSDT": {
+    "symbol": "AVAXUSDT",
+    "interval": "1d",
+    "source": "binance",
+    "rows": 2246,
+    "first": "2020-09-22 00:00:00+00:00",
+    "last": "2026-11-15 00:00:00+00:00",
+    "fetched_at": "2026-11-16T10:49:14+00:00"
+  }
+}
