@@ -28,9 +28,10 @@ dev = ["pytest>=8,<10"]
 
 [project.scripts]
 meridian = "meridian.cli:main"
+quant-agent = "quant_agent.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["meridian*"]
+include = ["meridian*", "quant_agent*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -2,6 +2,10 @@
 
 Les données synthétiques ne servent qu'aux tests. Le paper et le backtest
 réels utilisent les CSV Binance du dossier ``data/``.
+
+La date de fin est figée : ``synthetic_panel`` se termine sinon au jour
+courant, ce qui décale la fenêtre de test chaque jour et rend certains
+résultats path-dependent instables (par exemple le test de stress de coûts).
 """
 from __future__ import annotations
 
@@ -16,6 +20,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from meridian.config import load_config
 from meridian.data import synthetic_panel
 
+# Fin fixe du panel de test, indépendante de la date d'exécution.
+SYNTHETIC_END = pd.Timestamp("2026-06-30", tz="UTC")
+SYNTHETIC_DAYS = 1400
+
 
 @pytest.fixture(scope="session")
 def cfg() -> dict:
@@ -25,9 +33,15 @@ def cfg() -> dict:
 @pytest.fixture(scope="session")
 def panel(cfg) -> dict[str, pd.DataFrame]:
     data = synthetic_panel(cfg, seed=13)
-    last = max(df.index[-1] for df in data.values())
-    cutoff = last - pd.Timedelta(days=1400)
-    return {symbol: df.loc[df.index >= cutoff].copy() for symbol, df in data.items()}
+    data = {
+        symbol: frame.loc[frame.index <= SYNTHETIC_END].copy()
+        for symbol, frame in data.items()
+    }
+    cutoff = SYNTHETIC_END - pd.Timedelta(days=SYNTHETIC_DAYS)
+    return {
+        symbol: frame.loc[frame.index >= cutoff].copy()
+        for symbol, frame in data.items()
+    }
 
 
 @pytest.fixture(scope="session")

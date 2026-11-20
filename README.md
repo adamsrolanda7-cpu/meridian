@@ -39,9 +39,18 @@ python3 -m meridian live
 # 7) état du desk
 python3 -m meridian status
 
+# 8) copilote de recherche quant (paper only, provider mock par défaut)
+python3 -m quant_agent strategies
+python3 -m quant_agent ask "Fais un backtest trend momentum sur 2 ans"
+
 # tests
 python3 -m pytest -q
 ```
+
+Le CLI `quant-agent` est documenté dans
+[`docs/QUANT_AGENT_CLI.md`](docs/QUANT_AGENT_CLI.md). Il peut aussi être
+utilisé comme agent avec un provider OpenAI-compatible (OpenRouter, Groq,
+Ollama) ; le provider `mock` reste le défaut, sans clé API.
 
 Le rapport est écrit dans `runs/<tag>/report.html` et copié dans
 `reports/latest.html`. Le memo de séance est dans `runs/<tag>/memo.md`.
@@ -546,6 +555,11 @@ revue de risque séparée. Ce n'est pas implémenté.
 | `python3 -m meridian live` | Dashboard terminal temps réel, avec `--window` |
 | `python3 -m meridian report` | Reconstruit le rapport à partir de la config courante |
 | `python3 -m meridian status` | État des données et du paper |
+| `python3 -m quant_agent ask "..."` | Agent de recherche : outils, backtest, risque, paper |
+| `python3 -m quant_agent backtest` | Backtest déterministe avec cache et quotas |
+| `python3 -m quant_agent portfolio` | Portefeuille paper en lecture seule |
+| `python3 -m quant_agent risk` | Rapport de risque et kill switch |
+| `python3 -m quant_agent usage` | Quotas locaux du jour |
 | `python3 -m pytest -q` | Suite de tests |
 
 Options utiles : `--start`, `--end`, `--initial-equity`, `--cost-multiplier`,
