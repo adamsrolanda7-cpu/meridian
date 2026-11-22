@@ -100,6 +100,36 @@ def test_cached_monitor_is_used(cfg, live_env):
     assert snapshot["monitor"]["cached"] is True
 
 
+def test_offline_snapshot_reads_only_cache(cfg, panel, live_env, monkeypatch):
+    def boom(*args, **kwargs):
+        raise AssertionError("ensure_data ne doit pas être appelé en mode offline")
+
+    monkeypatch.setattr(live, "ensure_data", boom)
+    monkeypatch.setattr(live, "load_panel", lambda *a, **k: panel)
+    snapshot = live.collect_snapshot(cfg, include_monitor=False, offline=True)
+    assert snapshot["data"]["source"] == "cache (offline)"
+    text = live.render_text(snapshot, width=100, offline=True)
+    assert "OFFLINE" in text
+    assert "télécharger" not in text
+
+
+def test_child_args_propagate_offline():
+    args = live._child_args(5.0, 30.0, 300.0, False, False, 300.0, False, None, True)
+    assert "--offline" in args
+
+
+def test_snapshot_aligns_misaligned_assets(cfg, panel, live_env, monkeypatch):
+    mixed = {symbol: df.copy() for symbol, df in panel.items()}
+    extra = mixed["BTCUSDT"].iloc[[-1]].copy()
+    extra.index = pd.DatetimeIndex(
+        [mixed["BTCUSDT"].index[-1] + pd.Timedelta(days=1)]
+    )
+    mixed["BTCUSDT"] = pd.concat([mixed["BTCUSDT"], extra])
+    monkeypatch.setattr(live, "load_panel", lambda *a, **k: mixed)
+    snapshot = live.collect_snapshot(cfg, include_monitor=False, offline=True)
+    assert snapshot["data"]["last_bar"] == str(panel["ETHUSDT"].index[-1].date())
+
+
 def test_launch_window_without_gui_returns_failure(monkeypatch):
     monkeypatch.delenv("DISPLAY", raising=False)
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)

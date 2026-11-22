@@ -52,6 +52,12 @@ Le CLI `quant-agent` est documenté dans
 utilisé comme agent avec un provider OpenAI-compatible (OpenRouter, Groq,
 Ollama) ; le provider `mock` reste le défaut, sans clé API.
 
+Pour observer le paper dans le terminal, sans clé et en lecture seule :
+
+```bash
+./watch.sh
+```
+
 Le rapport est écrit dans `runs/<tag>/report.html` et copié dans
 `reports/latest.html`. Le memo de séance est dans `runs/<tag>/memo.md`.
 Le suivi opérationnel est écrit dans `runs/monitor.json` et `runs/monitor.md`.
@@ -413,12 +419,35 @@ trop court (< 60 jours). Ce n'est pas une alerte de performance.
 terminal. Il n'y a **pas de serveur web**, pas de navigateur et pas de port
 réseau : tout reste dans la session terminal.
 
+Le lanceur `./watch.sh` fait la même chose en un clic, en **lecture seule** :
+il n'exécute pas le paper et n'écrit pas le monitor. Aucune clé API n'est
+nécessaire pour observer l'état local.
+
+Par défaut, il tourne en mode `--offline` : il lit uniquement le cache
+`data/` et ne lance **aucun téléchargement**. Si le cache est absent, le
+message indique d'exécuter `python3 -m meridian download`.
+
+```bash
+./watch.sh                              # texte continu, sans curses
+./watch.sh --plain                      # une trame, puis quitter
+./watch.sh --window                     # tente une nouvelle fenêtre terminal
+./watch.sh --interval 2                 # rafraîchissement toutes les 2 s
+```
+
+Les commandes directes restent disponibles :
+
 ```bash
 python3 -m meridian live                 # plein écran, rafraîchi en continu
 python3 -m meridian live --window        # tente une nouvelle fenêtre terminal
 python3 -m meridian live --plain         # une trame texte, puis quitter
 python3 -m meridian live --follow        # texte continu, sans curses
+python3 -m meridian live --offline       # cache local uniquement, sans réseau
 ```
+
+Ce dashboard affiche l'état **local** (`runs/`). Le bot cloud publie son état
+sur la branche privée `meridian-state` ; le consulter depuis une autre machine
+demande un accès GitHub. Ce n'est pas une clé d'exchange ni une clé de modèle
+AI.
 
 Pour un affichage continu dans une autre fenêtre sans interface graphique,
 `--follow` peut écrire dans un fichier suivi par `tail` :

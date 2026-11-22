@@ -32,7 +32,7 @@ import pandas as pd
 from . import monitor, paper
 from .backtest import Backtest
 from .config import ROOT, get, load_config
-from .data import download_all, ensure_data, load_panel, quality_report
+from .data import DataError, download_all, ensure_data, load_panel, quality_report
 from .features import FeatureStore
 
 MONITOR_JSON = os.path.join(ROOT, "runs", "monitor.json")
@@ -160,19 +160,45 @@ def _activity(events: Iterable[dict] | None, journal: list[dict]) -> list[dict]:
 
 
 # --------------------------------------------------------------------- snapshot
+def _align_panel(panel: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Tronque le panel à la dernière bougie présente pour tous les actifs.
+
+    Un téléchargement partiel peut laisser certains CSV en avance. Le
+    dashboard doit alors afficher la dernière bougie commune au lieu de
+    calculer des signaux sur une date absente chez un actif.
+    """
+    if not panel:
+        raise DataError("aucun actif dans le panel")
+    last = min(df.index[-1] for df in panel.values())
+    return {
+        symbol: df.loc[:last] if df.index[-1] > last else df
+        for symbol, df in panel.items()
+    }
+
+
 def collect_snapshot(
     cfg: dict | None = None,
     include_monitor: bool = False,
     events: Iterable[dict] | None = None,
+    offline: bool = False,
 ) -> dict:
     """Construit un snapshot complet du desk, sans modifier le paper.
 
     ``include_monitor=True`` recalcule le monitor (plus coûteux). Sinon, le
     dernier ``runs/monitor.json`` est réutilisé pour l'affichage.
+
+    ``offline=True`` interdit tout téléchargement : seuls les fichiers déjà
+    présents dans ``data/`` sont lus. Si le cache est absent, l'erreur est
+    explicite au lieu de déclencher une requête réseau implicite.
     """
     cfg = cfg or load_config()
     now = datetime.now(timezone.utc)
-    panel, source = ensure_data(cfg, quiet=True)
+    if offline:
+        panel = load_panel(cfg)
+        source = "cache (offline)"
+    else:
+        panel, source = ensure_data(cfg, quiet=True)
+    panel = _align_panel(panel)
     quality = quality_report(cfg, panel)
     last_bar = max(df.index[-1] for df in panel.values())
     last_prices = {symbol: float(df["close"].iloc[-1]) for symbol, df in panel.items()}
@@ -392,6 +418,7 @@ def dashboard_lines(
     width: int = 100,
     auto_run: bool = True,
     fetch: bool = False,
+    offline: bool = False,
 ) -> list[tuple[str, str]]:
     """Construit les lignes du dashboard, sans footer ni pagination."""
     width = max(40, int(width))
@@ -408,9 +435,13 @@ def dashboard_lines(
     snapshot_at = str(snapshot.get("generated_at", ""))[11:19]
 
     add("=" * width, "dim")
+    modes = (
+        "OFFLINE · cache local uniquement"
+        if offline
+        else f"AUTO {'ON' if auto_run else 'OFF'} · FETCH {'ON' if fetch else 'OFF'}"
+    )
     add(
-        f" MERIDIAN · LIVE PAPER   {clock} UTC   [{status}]   "
-        f"AUTO {'ON' if auto_run else 'OFF'} · FETCH {'ON' if fetch else 'OFF'}",
+        f" MERIDIAN · LIVE PAPER   {clock} UTC   [{status}]   {modes}",
         style if status != "OK" else "title",
     )
     add(f" Aucun ordre réel — mode paper uniquement · snapshot {snapshot_at} UTC", "dim")
@@ -564,12 +595,17 @@ def format_dashboard(
     scroll: int = 0,
     auto_run: bool = True,
     fetch: bool = False,
+    offline: bool = False,
 ) -> list[tuple[str, str]]:
     """Rend le dashboard paginé. Retourne des couples ``(texte, style)``."""
     width = max(40, int(width))
-    content = dashboard_lines(snapshot, width=width, auto_run=auto_run, fetch=fetch)
+    content = dashboard_lines(
+        snapshot, width=width, auto_run=auto_run, fetch=fetch, offline=offline
+    )
     footer = (
-        " q quitter · r rafraîchir · p exécuter paper · d télécharger · "
+        " q quitter · r rafraîchir · p exécuter paper · ↑↓ défiler · OFFLINE "
+        if offline
+        else " q quitter · r rafraîchir · p exécuter paper · d télécharger · "
         "a auto · f fetch · ↑↓ défiler "
     )
     footer = _clip(footer, width)
@@ -596,8 +632,14 @@ def render_text(
     scroll: int = 0,
     auto_run: bool = True,
     fetch: bool = False,
+    offline: bool = False,
 ) -> str:
-    return "\n".join(text for text, _ in format_dashboard(snapshot, width, height, scroll, auto_run, fetch))
+    return "\n".join(
+        text
+        for text, _ in format_dashboard(
+            snapshot, width, height, scroll, auto_run, fetch, offline
+        )
+    )
 
 
 # --------------------------------------------------------------------- curses
@@ -641,7 +683,14 @@ def _attr(style: str) -> int:
     return _ATTRS.get(style, 0)
 
 
-def _draw(stdscr, snapshot: dict, auto_run: bool, fetch: bool, scroll: int) -> None:
+def _draw(
+    stdscr,
+    snapshot: dict,
+    auto_run: bool,
+    fetch: bool,
+    scroll: int,
+    offline: bool = False,
+) -> None:
     import curses
 
     stdscr.erase()
@@ -653,6 +702,7 @@ def _draw(stdscr, snapshot: dict, auto_run: bool, fetch: bool, scroll: int) -> N
         scroll=scroll,
         auto_run=auto_run,
         fetch=fetch,
+        offline=offline,
     )
     for y, (text, style) in enumerate(lines[:height]):
         try:
@@ -735,6 +785,7 @@ def _curses_loop(
     fetch: bool,
     fetch_interval: float,
     write_monitor: bool,
+    offline: bool = False,
 ) -> int:
     import curses
 
@@ -752,7 +803,7 @@ def _curses_loop(
         {"ts": datetime.now().strftime("%H:%M:%S"), "level": "info", "message": "dashboard démarré"}
     )
     auto = bool(auto_run)
-    fetch_on = bool(fetch)
+    fetch_on = bool(fetch) and not offline
     scroll = 0
     monitor_payload = _read_json(MONITOR_JSON)
     if monitor_payload:
@@ -769,7 +820,9 @@ def _curses_loop(
         if force or now_m - last_snapshot >= max(1.0, snapshot_interval):
             ran_paper = _run_paper_if_new(cfg, events) if auto else False
             try:
-                snapshot = collect_snapshot(cfg, include_monitor=False, events=list(events))
+                snapshot = collect_snapshot(
+                    cfg, include_monitor=False, events=list(events), offline=offline
+                )
             except Exception as exc:
                 snapshot = {
                     "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -802,7 +855,7 @@ def _curses_loop(
                 snapshot["monitor"] = updated
             last_monitor = now_m
 
-        if fetch_on and now_m - last_fetch >= max(30.0, fetch_interval):
+        if fetch_on and not offline and now_m - last_fetch >= max(30.0, fetch_interval):
             try:
                 download_all(cfg, quiet=True, force=True)
                 events.append(
@@ -819,7 +872,7 @@ def _curses_loop(
                 )
             last_fetch = now_m
 
-        _draw(stdscr, snapshot, auto, fetch_on, scroll)
+        _draw(stdscr, snapshot, auto, fetch_on, scroll, offline)
         ch = stdscr.getch()
         if ch == -1:
             continue
@@ -839,6 +892,15 @@ def _curses_loop(
                     monitor_payload = updated
             continue
         if ch in (ord("d"), ord("D")):
+            if offline:
+                events.append(
+                    {
+                        "ts": datetime.now().strftime("%H:%M:%S"),
+                        "level": "warn",
+                        "message": "téléchargement désactivé · mode offline",
+                    }
+                )
+                continue
             try:
                 download_all(cfg, quiet=True, force=True)
                 events.append(
@@ -865,6 +927,15 @@ def _curses_loop(
             )
             continue
         if ch in (ord("f"), ord("F")):
+            if offline:
+                events.append(
+                    {
+                        "ts": datetime.now().strftime("%H:%M:%S"),
+                        "level": "warn",
+                        "message": "fetch désactivé · mode offline",
+                    }
+                )
+                continue
             fetch_on = not fetch_on
             events.append(
                 {
@@ -901,6 +972,7 @@ def _child_args(
     fetch_interval: float,
     write_monitor: bool,
     config_path: str | None,
+    offline: bool = False,
 ) -> list[str]:
     args = [
         sys.executable,
@@ -920,6 +992,8 @@ def _child_args(
         args.append("--no-auto-run")
     if fetch:
         args.append("--fetch")
+    if offline:
+        args.append("--offline")
     if not write_monitor:
         args.append("--no-write-monitor")
     if config_path:
@@ -936,6 +1010,7 @@ def launch_window(
     fetch_interval: float = 300.0,
     write_monitor: bool = True,
     config_path: str | None = None,
+    offline: bool = False,
 ) -> int:
     """Tente d'ouvrir le dashboard dans une nouvelle fenêtre de terminal.
 
@@ -951,6 +1026,7 @@ def launch_window(
         fetch_interval,
         write_monitor,
         config_path,
+        offline,
     )
     shell_cmd = f"cd {shlex.quote(ROOT)} && exec {shlex.join(args)}"
     if os.environ.get("TMUX") and shutil.which("tmux"):
@@ -994,6 +1070,7 @@ def run(
     follow: bool = False,
     window: bool = False,
     config_path: str | None = None,
+    offline: bool = False,
 ) -> int:
     """Point d'entrée du dashboard terminal."""
     cfg = cfg or load_config()
@@ -1007,6 +1084,7 @@ def run(
             fetch_interval,
             write_monitor,
             config_path,
+            offline,
         ) == 0:
             return 0
         print("Fenêtre de terminal indisponible ; démarrage dans ce terminal.")
@@ -1017,9 +1095,21 @@ def run(
         frames = 0
         events: deque = deque(maxlen=30)
         while True:
-            if auto_run and follow:
+            if auto_run and follow and not offline:
                 _run_paper_if_new(cfg, events, quiet=True)
-            snapshot = collect_snapshot(cfg, include_monitor=False, events=list(events))
+            try:
+                snapshot = collect_snapshot(
+                    cfg, include_monitor=False, events=list(events), offline=offline
+                )
+            except Exception as exc:
+                print(f"ERREUR : {exc}", file=sys.stderr)
+                if offline:
+                    print(
+                        "Le mode offline ne télécharge rien. Pour actualiser le cache : "
+                        "python3 -m meridian download",
+                        file=sys.stderr,
+                    )
+                return 1
             size = shutil.get_terminal_size((100, 40))
             text = render_text(
                 snapshot,
@@ -1027,6 +1117,7 @@ def run(
                 height=None,
                 auto_run=auto_run,
                 fetch=fetch,
+                offline=offline,
             )
             if follow and frames:
                 print("\033[2J\033[H", end="")
@@ -1053,6 +1144,7 @@ def run(
                 fetch,
                 fetch_interval,
                 write_monitor,
+                offline,
             )
             or 0
         )

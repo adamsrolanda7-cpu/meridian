@@ -250,6 +250,7 @@ def cmd_live(args) -> int:
         follow=args.follow,
         window=args.window,
         config_path=args.config,
+        offline=args.offline,
     )
 
 
@@ -320,6 +321,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_live.add_argument("--plain", action="store_true", help="afficher une trame texte et quitter")
     p_live.add_argument("--follow", action="store_true", help="mode texte continu, sans curses")
     p_live.add_argument("--window", action="store_true", help="ouvrir le dashboard dans une nouvelle fenêtre")
+    p_live.add_argument("--offline", action="store_true", help="ne rien télécharger ; lire uniquement le cache local")
     p_live.set_defaults(func=cmd_live)
 
     p_rep = sub.add_parser("report", help="reconstruire le rapport HTML")
