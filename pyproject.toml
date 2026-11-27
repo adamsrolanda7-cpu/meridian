@@ -24,6 +24,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+live = ["ccxt>=4.0"]
 dev = ["pytest>=8,<10"]
 
 [project.scripts]

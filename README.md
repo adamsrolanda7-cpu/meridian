@@ -2,8 +2,14 @@
 
 Moteur de recherche et de **paper trading** systématique pour BTC, ETH, SOL,
 LTC, XRP, BNB, LINK et AVAX. Le système est long-only spot, sans levier,
-déterministe et auditable. Il décide sur bougies quotidiennes clôturées,
-exécute à l'ouverture suivante, et n'envoie **aucun ordre réel**.
+déterministe et auditable. Il décide sur bougies quotidiennes clôturées et
+exécute à l'ouverture suivante.
+
+Par défaut, il n'envoie **aucun ordre réel**. Un mode compte réel **opt-in**
+existe depuis la commande `trade` : il lit le compte via ccxt, calcule un plan,
+et n'envoie des ordres qu'avec `--execute --confirm` **et**
+`MERIDIAN_LIVE_CONFIRM=YES`. La checklist complète est dans
+[`docs/LIVE_CHECKLIST.md`](docs/LIVE_CHECKLIST.md).
 
 > Ce dépôt est un outil de recherche et de simulation. Ce n'est pas un conseil
 > en investissement. Les performances passées, simulées ou papier, ne préjugent
@@ -39,7 +45,16 @@ python3 -m meridian live
 # 7) état du desk
 python3 -m meridian status
 
-# 8) copilote de recherche quant (paper only, provider mock par défaut)
+# 8) mode compte réel — opt-in, testnet par défaut, dry-run par défaut
+python3 -m pip install -e ".[live]"
+cp .env.example .env        # si absent, puis remplir les clés
+python3 -m meridian live-status
+python3 -m meridian account  # lecture seule testnet
+python3 -m meridian trade    # plan seulement, aucun ordre envoyé
+# Envoi réel : lire docs/LIVE_CHECKLIST.md, puis
+# python3 -m meridian trade --mainnet --execute --confirm
+
+# 9) copilote de recherche quant (paper only, provider mock par défaut)
 python3 -m quant_agent strategies
 python3 -m quant_agent ask "Fais un backtest trend momentum sur 2 ans"
 
@@ -63,7 +78,8 @@ Le rapport est écrit dans `runs/<tag>/report.html` et copié dans
 Le suivi opérationnel est écrit dans `runs/monitor.json` et `runs/monitor.md`.
 
 Dépendances : Python ≥ 3.11 (testé sur 3.14), `numpy`, `pandas` ; `pytest`
-uniquement pour les tests. Aucun package `requests` ni `matplotlib` n'est
+uniquement pour les tests. `ccxt` est optionnel et réservé au mode réel
+(`pip install -e ".[live]"`). Aucun package `requests` ni `matplotlib` n'est
 nécessaire : HTTP via `urllib`, graphiques en SVG inline.
 
 ```bash
@@ -176,8 +192,8 @@ probation `40 séances`.
 | Exposition brute max | 95 % |
 | Cash minimum | 5 % |
 | Poids max par actif | 35 % |
-| Mode d'exécution | `paper` uniquement |
-| Broker | aucun |
+| Mode d'exécution | `paper` par défaut ; `live` opt-in via `trade` |
+| Broker | aucun en paper ; ccxt spot en live (clé sans retrait) |
 
 La configuration est figée dans `config/default.json`. La recherche finale
 tourne en mode `research.freeze_mandate=true` : la grille de sensibilité ne
@@ -552,7 +568,8 @@ jour à 00:30 UTC. Il peut aussi être lancé à la main depuis l'onglet Actions
   supprimer ;
 - au premier run, le paper est initialisé à la dernière bougie clôturée ;
 - les données sont téléchargées avec `--force`, puis mises en cache ;
-- aucun secret, aucune clé d'exchange, aucun ordre réel ;
+- aucun secret, aucune clé d'exchange, aucun ordre réel : le workflow cloud
+  reste strictement paper ;
 - le job passe en rouge si le monitor est en `ALERT`, si le paper diverge ou
   si les données réelles sont indisponibles.
 
@@ -562,10 +579,11 @@ General → Workflow permissions. GitHub peut retarder les crons et désactive
 les workflows planifiés après 60 jours sans activité du dépôt ;
 `workflow_dispatch` permet de relancer manuellement.
 
-Garde-fou live : `execution.mode` doit valoir `paper`. Toute autre valeur lève
-`LiveTradingDisabled`. L'ajout du live exige un adaptateur broker, des clés
-hors dépôt, une gestion d'erreurs réseau, un rapprochement de positions et une
-revue de risque séparée. Ce n'est pas implémenté.
+Garde-fou paper : `paper.py` refuse toujours `execution.mode != "paper"`.
+Le mode réel est un chemin séparé, `live_trade.py`, avec ses propres verrous :
+`--mainnet`, `--execute`, `--confirm` et `MERIDIAN_LIVE_CONFIRM=YES`. Il ne
+modifie pas l'état du paper et n'est jamais lancé par le workflow GitHub
+Actions. Voir la section 8 et `docs/LIVE_CHECKLIST.md`.
 
 ---
 
@@ -582,6 +600,10 @@ revue de risque séparée. Ce n'est pas implémenté.
 | `python3 -m meridian paper --verify` | Audite l'état papier contre le replay |
 | `python3 -m meridian monitor` | Suivi opérationnel, rolling Sharpe, kill criteria |
 | `python3 -m meridian live` | Dashboard terminal temps réel, avec `--window` |
+| `python3 -m meridian live-status` | Vérifie `.env`, les clés et l'état local du mode réel, sans réseau |
+| `python3 -m meridian account` | Lit le compte réel en lecture seule (testnet par défaut, `--mainnet` pour le réel) |
+| `python3 -m meridian trade` | Dry-run : lit le compte et écrit `runs/live/plan.json`, sans ordre |
+| `python3 -m meridian trade --mainnet --execute --confirm` | Envoie réellement les ordres (checklist obligatoire) |
 | `python3 -m meridian report` | Reconstruit le rapport à partir de la config courante |
 | `python3 -m meridian status` | État des données et du paper |
 | `python3 -m quant_agent ask "..."` | Agent de recherche : outils, backtest, risque, paper |
@@ -598,7 +620,85 @@ Options utiles : `--start`, `--end`, `--initial-equity`, `--cost-multiplier`,
 
 ---
 
-## 8. Limites
+## 8. Mode compte réel (opt-in)
+
+Le mode réel est séparé du paper. Il ne s'active **jamais** parce qu'une clé
+est présente dans `.env`. Pour le mainnet, quatre verrous sont nécessaires :
+
+1. `--mainnet` pour quitter le testnet ;
+2. `--execute` pour demander l'envoi ;
+3. `--confirm` pour accepter le risque ;
+4. `MERIDIAN_LIVE_CONFIRM=YES` dans `.env` ou l'environnement.
+
+Sans `--execute`, la commande est un **dry-run** : elle lit le compte, calcule
+les ordres et écrit `runs/live/plan.json`, sans rien envoyer.
+
+### Installation
+
+```bash
+cd /root/meridian
+python3 -m pip install -e ".[live]"     # ajoute ccxt
+cp .env.example .env                    # si .env n'existe pas
+```
+
+Remplir `.env` (jamais commité) :
+
+| Variable | Rôle |
+|---|---|
+| `MERIDIAN_EXCHANGE_ID` | Exchange ccxt : `binance`, `kraken`, `okx`, `bybit`, ... |
+| `MERIDIAN_EXCHANGE_API_KEY` | Clé API, lecture + trading spot, **sans retrait** |
+| `MERIDIAN_EXCHANGE_API_SECRET` | Secret API |
+| `MERIDIAN_EXCHANGE_PASSPHRASE` | Phrase secrète si l'exchange l'exige (OKX, KuCoin) |
+| `MERIDIAN_EXCHANGE_SANDBOX` | `true` = testnet (défaut), `false` = mainnet |
+| `MERIDIAN_QUOTE` | Devise de cotation, `USDT` par défaut |
+| `MERIDIAN_LIVE_CONFIRM` | Doit valoir `YES` pour un envoi réel |
+| `MERIDIAN_MAX_ORDER_USD` | Plafond par ordre (défaut 250 $) |
+| `MERIDIAN_MAX_DAILY_TURNOVER_USD` | Plafond de turnover par jour (défaut 1 000 $) |
+
+### Commandes
+
+```bash
+# Vérification locale, sans réseau
+python3 -m meridian live-status
+
+# Lecture seule du compte (testnet par défaut)
+python3 -m meridian account
+python3 -m meridian account --mainnet
+
+# Plan de rééquilibrage, aucun ordre envoyé
+python3 -m meridian trade
+python3 -m meridian trade --mainnet
+
+# Envoi réel — uniquement après la checklist
+MERIDIAN_LIVE_CONFIRM=YES python3 -m meridian trade --mainnet --execute --confirm
+```
+
+Le mode réel :
+
+- lit les soldes et les prix via ccxt ;
+- réutilise le moteur Meridian pour obtenir les poids cibles ;
+- compare les cibles au compte réel, vend avant d'acheter ;
+- applique `max_gross`, `max_asset_weight`, `min_cash`, le notionnel minimum,
+  le plafond par ordre et le plafond de turnover ;
+- bloque les achats si le drawdown réel ou la perte journalière dépasse le
+  gouverneur ;
+- persiste `runs/live/state.json`, `runs/live/plan.json` et
+  `runs/live/journal.jsonl`.
+
+Il ne fait **pas** :
+
+- d'ordres stop sur l'exchange (les stops restent évalués par le processus
+  local sur les clôtures) ;
+- de réconciliation automatique des fills partiels ou des ordres orphelins ;
+- de retrait, de futures, de marge ou de short ;
+- de promesse de rentabilité.
+
+Checklist obligatoire avant le premier ordre réel :
+[`docs/LIVE_CHECKLIST.md`](docs/LIVE_CHECKLIST.md).
+
+---
+
+## 9. Limites
 
 - **Biais d'univers** : les 8 actifs sont choisis a posteriori ; ils ont
   survécu et sont liquides. Le biais de survie est plus fort qu'avec 4 actifs.
@@ -617,11 +717,14 @@ Options utiles : `--start`, `--end`, `--initial-equity`, `--cost-multiplier`,
   Sa réactivation exige un redesign et une nouvelle période de validation.
 - **Coûts et exécution** : pas de carnet, pas de latence, pas de partial
   fills. Le slippage est déterministe.
-- **Paper, pas live** : aucun ordre réel, aucune preuve de rentabilité future.
+- **Paper par défaut, live opt-in** : le mode réel existe mais reste
+  volontairement verrouillé. Il n'apporte aucune preuve de rentabilité future
+  et ajoute des risques opérationnels (réseau, exchange, fills partiels,
+  clé API, processus arrêté).
 
 ---
 
-## 9. Reproductibilité
+## 10. Reproductibilité
 
 ```bash
 cd /root/meridian

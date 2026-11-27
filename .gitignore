@@ -16,6 +16,11 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
+# Secrets locaux : ne jamais committer de clé API
+.env
+.env.*
+!.env.example
+
 # Sorties générées (reproductibles par les commandes du README)
 runs/
 reports/

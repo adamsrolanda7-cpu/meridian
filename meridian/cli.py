@@ -7,6 +7,9 @@ Commandes :
     paper      initialise, exécute ou consulte le portefeuille papier
     monitor    suivi opérationnel, rolling Sharpe et kill criteria
     live       tableau de bord terminal temps réel, sans web
+    live-status vérifie .env et l'état local du mode réel, sans réseau
+    account    lit le compte réel (lecture seule, testnet par défaut)
+    trade      planifie ou exécute un rééquilibrage réel (opt-in explicite)
     report     reconstruit le rapport à partir de la configuration courante
     status     état des données et du paper trading
 """
@@ -33,6 +36,14 @@ from .paper import (
     state_exists,
     status as paper_status,
     verify as paper_verify,
+)
+from .exchange import ExchangeError
+from .live_trade import (
+    LiveTradingError,
+    format_status as format_live_status,
+    run_account,
+    run_trade,
+    status as live_status,
 )
 from .report import build_report
 from .research import run_research, summarize
@@ -254,6 +265,53 @@ def cmd_live(args) -> int:
     )
 
 
+def cmd_live_status(args) -> int:
+    payload = live_status()
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
+    else:
+        print(format_live_status(payload))
+    return 0
+
+
+def cmd_account(args) -> int:
+    cfg = _load_cfg(args)
+    try:
+        run_account(
+            cfg,
+            mainnet=args.mainnet,
+            exchange_id=args.exchange,
+            json_output=args.json,
+        )
+        return 0
+    except (LiveTradingError, ExchangeError) as exc:
+        print(f"ERREUR compte réel : {exc}", file=sys.stderr)
+        return 2
+
+
+def cmd_trade(args) -> int:
+    cfg = _load_cfg(args)
+    try:
+        payload = run_trade(
+            cfg,
+            execute=args.execute,
+            confirm=args.confirm,
+            mainnet=args.mainnet,
+            exchange_id=args.exchange,
+            order_type=args.order_type,
+            max_order_usd=args.max_order_usd,
+            max_turnover_usd=args.max_turnover_usd,
+            refresh=not args.no_refresh,
+            json_output=args.json,
+        )
+        if args.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
+        return 0
+    except (LiveTradingError, ExchangeError) as exc:
+        print(f"ERREUR mode réel : {exc}", file=sys.stderr)
+        return 2
+
+
 # ------------------------------------------------------------------------ parser
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -324,6 +382,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_live.add_argument("--offline", action="store_true", help="ne rien télécharger ; lire uniquement le cache local")
     p_live.set_defaults(func=cmd_live)
 
+    p_lst = sub.add_parser(
+        "live-status",
+        help="vérifier .env, les clés et l'état local du mode réel (sans réseau)",
+    )
+    p_lst.add_argument("--json", action="store_true", help="sortie JSON")
+    p_lst.set_defaults(func=cmd_live_status)
+
+    p_acc = sub.add_parser(
+        "account",
+        help="lire le compte réel en lecture seule (testnet par défaut)",
+    )
+    p_acc.add_argument("--config", help="fichier JSON de surcharge")
+    p_acc.add_argument("--mainnet", action="store_true", help="utiliser le compte mainnet (sinon testnet)")
+    p_acc.add_argument("--exchange", help="identifiant ccxt (binance, kraken, okx, ...)")
+    p_acc.add_argument("--json", action="store_true", help="sortie JSON")
+    p_acc.set_defaults(func=cmd_account)
+
+    p_tr = sub.add_parser(
+        "trade",
+        help="dry-run par défaut, ou exécution réelle avec --execute --confirm",
+    )
+    p_tr.add_argument("--config", help="fichier JSON de surcharge")
+    p_tr.add_argument("--mainnet", action="store_true", help="utiliser le compte mainnet (sinon testnet)")
+    p_tr.add_argument("--exchange", help="identifiant ccxt (binance, kraken, okx, ...)")
+    p_tr.add_argument("--execute", action="store_true", help="envoyer réellement les ordres")
+    p_tr.add_argument("--confirm", action="store_true", help="accepter explicitement le risque d'exécution")
+    p_tr.add_argument("--order-type", choices=["market", "limit"], default="market", help="type d'ordre")
+    p_tr.add_argument("--max-order-usd", type=float, help="plafond par ordre (défaut: .env)")
+    p_tr.add_argument("--max-turnover-usd", type=float, help="plafond de turnover journalier (défaut: .env)")
+    p_tr.add_argument("--no-refresh", action="store_true", help="ne pas télécharger de nouvelles bougies")
+    p_tr.add_argument("--json", action="store_true", help="sortie JSON")
+    p_tr.set_defaults(func=cmd_trade)
+
     p_rep = sub.add_parser("report", help="reconstruire le rapport HTML")
     add_common(p_rep)
     p_rep.set_defaults(func=cmd_report)
@@ -339,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return int(args.func(args) or 0)
-    except (DataError, PaperError, ValueError, FileNotFoundError) as exc:
+    except (DataError, PaperError, LiveTradingError, ExchangeError, ValueError, FileNotFoundError) as exc:
         print(f"ERREUR : {exc}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
