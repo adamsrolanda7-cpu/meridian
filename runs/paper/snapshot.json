@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "run_at": "2026-11-28T08:13:17+00:00",
+  "config_hash": "929fe4839073b339",
+  "start": "2026-11-15",
+  "last_bar": "2026-11-27",
+  "equity": 100000.0,
+  "regime": {
+    "label": "TREND_DOWN",
+    "score": -1.0,
+    "confidence": 1.0,
+    "breadth": 0.0,
+    "vol_pct": 0.7589041095890411,
+    "adx": 49.980582848885014,
+    "reason": "BTC < EMA200, EMA50 < EMA200, ADX 50, breadth 0% → cash"
+  },
+  "signals": [
+    {
+      "asset": "BTCUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.5919306386485084,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "BTCUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "BTCUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "ETHUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.5898974423702392,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "ETHUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "ETHUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "SOLUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.5908540666860554,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "SOLUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "SOLUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "LTCUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.40469899925302927,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "LTCUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "LTCUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "XRPUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.5909696961743599,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "XRPUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "XRPUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "BNBUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.5261675616081115,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "BNBUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "BNBUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "LINKUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.4643223983380295,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "LINKUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "LINKUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    },
+    {
+      "asset": "AVAXUSDT",
+      "sleeve": "trend",
+      "score": 0.0,
+      "confidence": 0.38363918011979176,
+      "reason": "sous EMA200 ou momentum insuffisant"
+    },
+    {
+      "asset": "AVAXUSDT",
+      "sleeve": "meanrev",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "pas d'excès baissier exploitable"
+    },
+    {
+      "asset": "AVAXUSDT",
+      "sleeve": "xsmom",
+      "score": 0.0,
+      "confidence": 0.0,
+      "reason": "hors du top momentum ou dispersion insuffisante"
+    }
+  ],
+  "targets": [
+    {
+      "asset": "BTCUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "ETHUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "SOLUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "LTCUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "XRPUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "BNBUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "LINKUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    },
+    {
+      "asset": "AVAXUSDT",
+      "weight": 0.0,
+      "score": 0.0,
+      "reason": "régime TREND_DOWN → cash"
+    }
+  ],
+  "orders": [],
+  "portfolio_vol": 0.0
+}

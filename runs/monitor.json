@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-11-28T08:13:17+00:00",
+  "config_hash": "929fe4839073b339",
+  "checks": [
+    {
+      "name": "fraîcheur données",
+      "status": "OK",
+      "value": "1 j",
+      "detail": "dernière bougie 2026-11-27 · seuil 3 j",
+      "action": "ne pas trader sur des données périmées ; relancer le téléchargement."
+    },
+    {
+      "name": "qualité données",
+      "status": "OK",
+      "value": "OK",
+      "detail": "tous les actifs OK",
+      "action": "exclure les actifs douteux ou documenter l'écart avant toute décision."
+    },
+    {
+      "name": "mandat",
+      "status": "OK",
+      "value": "inchangé",
+      "detail": "la config courante correspond à l'initialisation du paper",
+      "action": "archiver l'état et réinitialiser avec `paper --init --force`, ou revenir à la config d'origine."
+    },
+    {
+      "name": "réconciliation replay",
+      "status": "OK",
+      "value": "+0,000%",
+      "detail": "equity papier/replay identiques à +0,000% près.",
+      "action": ""
+    },
+    {
+      "name": "drawdown",
+      "status": "OK",
+      "value": "+0,0%",
+      "detail": "drawdown courant · max historique du replay +0,0% · watch -12,0% · kill -20,0%",
+      "action": ""
+    },
+    {
+      "name": "Sharpe glissant",
+      "status": "WATCH",
+      "value": "historique court",
+      "detail": "12 jours seulement ; minimum 60.",
+      "action": "attendre l'historique minimal avant d'interpréter le rolling."
+    },
+    {
+      "name": "exposition",
+      "status": "OK",
+      "value": "+0,0%",
+      "detail": "brut / plafond 95,0% · positions 0 · aucune position au-dessus de 35,0%",
+      "action": ""
+    },
+    {
+      "name": "turnover",
+      "status": "OK",
+      "value": "0,0x",
+      "detail": "turnover annualisé · seuil 9,0x",
+      "action": ""
+    },
+    {
+      "name": "gouverneur",
+      "status": "OK",
+      "value": "normal",
+      "detail": "drawdown gouverneur +0,0% · dernier halt aucun",
+      "action": ""
+    }
+  ],
+  "source": "binance/cache",
+  "last_bar": "2026-11-27",
+  "stale_days": 1,
+  "quality": {
+    "BTCUSDT": {
+      "status": "OK",
+      "rows": 2888,
+      "first": "2019-01-01",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 59923.1,
+      "adv20_usd": 1513406754.9199257
+    },
+    "ETHUSDT": {
+      "status": "OK",
+      "rows": 2888,
+      "first": "2019-01-01",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 1662.48,
+      "adv20_usd": 637263525.0420005
+    },
+    "SOLUSDT": {
+      "status": "OK",
+      "rows": 2300,
+      "first": "2020-08-11",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 71.66,
+      "adv20_usd": 211814731.09203547
+    },
+    "LTCUSDT": {
+      "status": "OK",
+      "rows": 2888,
+      "first": "2019-01-01",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 45.2,
+      "adv20_usd": 15213089.254907498
+    },
+    "XRPUSDT": {
+      "status": "OK",
+      "rows": 2888,
+      "first": "2019-01-01",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 0.9489,
+      "adv20_usd": 124361177.04375751
+    },
+    "BNBUSDT": {
+      "status": "OK",
+      "rows": 2888,
+      "first": "2019-01-01",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 554.72,
+      "adv20_usd": 81999124.580365
+    },
+    "LINKUSDT": {
+      "status": "OK",
+      "rows": 2873,
+      "first": "2019-01-16",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 9.375,
+      "adv20_usd": 18731241.9416575
+    },
+    "AVAXUSDT": {
+      "status": "OK",
+      "rows": 2258,
+      "first": "2020-09-22",
+      "last": "2026-11-27",
+      "stale_days": 1,
+      "gaps": 0,
+      "duplicates": 0,
+      "ohlc_violations": 0,
+      "zero_volume_bars": 0,
+      "last_close": 6.614,
+      "adv20_usd": 17159856.1891515
+    }
+  },
+  "paper": {
+    "start": "2026-11-15",
+    "last_bar": "2026-11-27",
+    "equity": 100000.0,
+    "cash": 100000.0,
+    "drawdown": 0.0,
+    "regime": "TREND_DOWN",
+    "runs": 13
+  },
+  "attribution": {
+    "all": {
+      "trades": 0,
+      "pnl": 0.0,
+      "by_sleeve": {},
+      "by_asset": {}
+    },
+    "90d": {
+      "trades": 0,
+      "pnl": 0.0,
+      "by_sleeve": {},
+      "by_asset": {}
+    }
+  },
+  "replay": {
+    "last_bar": "2026-11-27",
+    "equity": 100000.0,
+    "max_drawdown": 0.0,
+    "current_drawdown": 0.0,
+    "gross": 0,
+    "weights": {},
+    "regime": "TREND_DOWN",
+    "cash": 100000.0,
+    "halts": []
+  },
+  "pending": [],
+  "status": "WATCH",
+  "kill_switch": false
+}
